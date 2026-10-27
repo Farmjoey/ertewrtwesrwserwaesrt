@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NOVA RIDE</title>
+<style>
+:root{--bg:#f3f3f5;--card:#fff;--card2:#e9e9ee;--fg:#141416;--mut:#6b6b76;--acc:#ff8200;--line:#dcdce2;--ok:#14a05f;--bad:#d93a4a;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e0e10;--card:#1b1b1f;--card2:#2a2a30;--fg:#f4f4f6;--mut:#9a9aa6;--line:#2c2c33;--ok:#2fd388;--bad:#ff5566}}
+:root[data-theme="dark"]{--bg:#0e0e10;--card:#1b1b1f;--card2:#2a2a30;--fg:#f4f4f6;--mut:#9a9aa6;--line:#2c2c33;--ok:#2fd388;--bad:#ff5566}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--bg);border-bottom:1px solid var(--line)}
+.logo{font-weight:800;letter-spacing:.14em;font-size:17px}.logo b{color:var(--acc)}
+#pill{font-size:12px;padding:5px 10px;border-radius:99px;background:var(--card2);color:var(--mut)}
+#pill.on{background:var(--ok);color:#06210f}
+main{max-width:560px;margin:0 auto;padding:6px 14px calc(96px + env(safe-area-inset-bottom,0px))}
+.card{background:var(--card);border-radius:20px;padding:16px;margin:12px 0}
+h2{margin:0 0 4px;font-size:18px}h3{margin:0 0 8px;font-size:15px;color:var(--mut);font-weight:600}
+p{margin:6px 0;color:var(--mut);font-size:14px}
+.btn{display:block;width:100%;border:0;border-radius:14px;padding:14px;font:700 16px system-ui;background:var(--acc);color:#141416;cursor:pointer;margin-top:10px}
+.btn.sec{background:var(--card2);color:var(--fg)}.btn[disabled]{opacity:.4}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.hero{display:flex;align-items:center;gap:16px}
+.hero svg{flex:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{font-size:12px;padding:5px 10px;border-radius:99px;background:var(--card2);color:var(--mut)}
+.chip.ok{background:var(--ok);color:#06210f}
+.kv{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}.kv:last-child{border:0}.kv span:first-child{color:var(--mut)}
+.bar{height:12px;border-radius:99px;background:var(--card2);overflow:hidden;margin:12px 0 6px}.bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .15s}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tcard{border:2px solid transparent;border-radius:16px;padding:8px;background:var(--card2);cursor:pointer;text-align:center;font-size:13px}
+.tcard.sel{border-color:var(--acc)}
+.tcard svg{width:100%;height:auto;border-radius:10px;display:block;margin-bottom:6px}
+.step{display:flex;gap:12px;margin:10px 0;align-items:flex-start}.step em{flex:none;width:26px;height:26px;border-radius:50%;background:var(--acc);color:#141416;font-style:normal;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
+input[type=text]{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--fg);font-size:16px}
+input[type=range]{width:100%;accent-color:var(--acc)}
+canvas{width:100%;image-rendering:pixelated;background:#000;border-radius:10px;display:block}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.seg button{padding:10px 4px;border-radius:12px;border:2px solid transparent;background:var(--card2);color:var(--fg);font-size:13px}.seg button.sel{border-color:var(--acc)}
+.play{display:flex;justify-content:center;gap:18px;margin:18px 0}.play button{width:74px;height:74px;border-radius:50%;border:0;background:var(--card2);color:var(--fg);font-size:26px}.play button.big{background:var(--acc);color:#141416;width:88px;height:88px;font-size:32px}
+.warn{background:#ff82001f;border:1px solid var(--acc);color:var(--fg);border-radius:14px;padding:10px 12px;font-size:14px}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(5,1fr);background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{border:0;background:none;color:var(--mut);padding:10px 2px 8px;font-size:11px}nav button span{display:block;font-size:20px}
+nav button.sel{color:var(--acc)}
+.small{font-size:12px;color:var(--mut)}
+</style>
+</head>
+<body>
+<header><div class="logo">NOVA <b>RIDE</b></div><div id="pill">Ikke forbundet</div></header>
+<main id="view"></main>
+<nav id="tabs"></nav>
+<script>
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s)};
+var UU={svc:'4e4f5641-5249-4445-0000-000000000001',ctrl:'4e4f5641-5249-4445-0000-000000000002',data:'4e4f5641-5249-4445-0000-000000000003',stat:'4e4f5641-5249-4445-0000-000000000004'};
+var OP={INFO:1,BEGIN:0x10,END:0x11,ABORT:0x12,THEME:0x20,STYLE:0x21,TEXT:0x22,IMG_BEGIN:0x23,IMG_CHUNK:0x24,IMG_END:0x25,PREVIEW:0x26,MUSIC:0x30};
+var ERR=['','Opdateringsvinduet er lukket på boardet','Løbehjulet kører','Filstørrelsen accepteres ikke','Ikke en ESP32-firmware (.bin)','CRC-fejl','Skrivefejl i flash','Kunne ikke starte opdatering','Dataoverløb – prøv igen','Boardet er optaget','Timeout'];
+var THEMES=[
+ {n:'NOVA BLUE',bg:'#040814',panel:'#0a1630',neon:'#00aaff',warn:'#ffb000',ok:'#00dc8c',text:'#e1f0ff'},
+ {n:'EMBER',bg:'#120604',panel:'#2c120a',neon:'#ff6e14',warn:'#ffc800',ok:'#78dc50',text:'#fff0e1'},
+ {n:'MATRIX',bg:'#020c06',panel:'#082412',neon:'#00ff6e',warn:'#ffc800',ok:'#78ffa0',text:'#dcffe6'},
+ {n:'VIOLET',bg:'#0a0414',panel:'#1c0e34',neon:'#aa5aff',warn:'#ffbe3c',ok:'#00dca0',text:'#f0e6ff'},
+ {n:'ROSE',bg:'#14040a',panel:'#300c1c',neon:'#ff3c8c',warn:'#ffbe28',ok:'#00dc96',text:'#ffe6f0'},
+ {n:'MONO',bg:'#000000',panel:'#1a1a1a',neon:'#ebebeb',warn:'#ffbe00',ok:'#00dc78',text:'#ffffff'}];
+var STYLES=['Klassisk','Navn','Billede','Minimal'];
+var MAXAPP=0x140000,MINAPP=65536;
+
+var S={tab:'device',t:null,demo:false,conn:false,info:null,ota:{state:0,err:0,recv:0,total:0},file:null,fileInfo:null,
+  img:null,thr:128,inv:false,imgName:'',busy:false,msg:'',text:'',acks:{},otaWait:null};
+
+// ---------- CRC-32 (same as zlib) ----------
+var CRC=(function(){var t=new Uint32Array(256);for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(u8){var c=0xFFFFFFFF;for(var i=0;i<u8.length;i++)c=CRC[(c^u8[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+function le32(v){return [v&255,(v>>>8)&255,(v>>>16)&255,(v>>>24)&255]}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+function hex(v){return ('00000000'+v.toString(16)).slice(-8).toUpperCase()}
+
+// ---------- transports ----------
+function BleT(){this.onStat=null;this.onClose=null}
+BleT.prototype.connect=async function(){
+  var self=this;
+  this.dev=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'NOVA RIDE'}],optionalServices:[UU.svc]});
+  this.dev.addEventListener('gattserverdisconnected',function(){if(self.onClose)self.onClose()});
+  var srv=await this.dev.gatt.connect();
+  var svc=await srv.getPrimaryService(UU.svc);
+  this.c=await svc.getCharacteristic(UU.ctrl);
+  this.d=await svc.getCharacteristic(UU.data);
+  this.s=await svc.getCharacteristic(UU.stat);
+  await this.s.startNotifications();
+  this.s.addEventListener('characteristicvaluechanged',function(e){if(self.onStat)self.onStat(new Uint8Array(e.target.value.buffer,e.target.value.byteOffset,e.target.value.byteLength))});
+};
+BleT.prototype.disconnect=function(){try{this.dev.gatt.disconnect()}catch(e){}};
+BleT.prototype.ctrl=function(b){var u=new Uint8Array(b);return this.c.writeValueWithResponse?this.c.writeValueWithResponse(u):this.c.writeValue(u)};
+BleT.prototype.data=function(b){var u=new Uint8Array(b);return this.d.writeValueWithoutResponse?this.d.writeValueWithoutResponse(u):this.d.writeValue(u)};
+
+// A simulated board, so the app can be tried without hardware.
+function DemoT(){this.onStat=null;this.onClose=null;this.st={theme:0,style:0,text:'',img:false,recv:0,total:0,exp:0,state:0}}
+DemoT.prototype.connect=async function(){await sleep(300)};
+DemoT.prototype.disconnect=function(){if(this.onClose)this.onClose()};
+DemoT.prototype.emit=function(a){if(this.onStat)this.onStat(new Uint8Array(a))};
+DemoT.prototype.info=function(){var s=this.st,e=new TextEncoder(),a=[1,1,s.theme,s.style,1|(s.img?2:0)|4|8,0].slice(0,5);
+  var tail=Array.from(e.encode('0.8.0 (demo)')).concat([0],Array.from(e.encode('cyd_st7789')),[0],Array.from(e.encode(s.text)),[0]);this.emit(a.concat(tail))};
+DemoT.prototype.ota=function(){var s=this.st;this.emit([0x10,s.state,0].concat(le32(s.recv),le32(s.total)))};
+DemoT.prototype.ack=function(op,r){this.emit([0x30,op,r||0])};
+DemoT.prototype.ctrl=async function(b){var s=this.st,self=this;await sleep(30);
+  switch(b[0]){
+   case OP.INFO:this.info();break;
+   case OP.THEME:s.theme=b[1];this.ack(b[0]);break;
+   case OP.STYLE:s.style=b[1];this.ack(b[0]);break;
+   case OP.TEXT:s.text=new TextDecoder().decode(b.slice?b.slice(1):new Uint8Array(b).slice(1));this.ack(b[0]);break;
+   case OP.IMG_BEGIN:case OP.IMG_CHUNK:this.ack(b[0]);break;
+   case OP.IMG_END:s.img=true;this.ack(b[0]);break;
+   case OP.PREVIEW:case OP.MUSIC:case OP.END:case OP.ABORT:this.ack(b[0]);if(b[0]===OP.ABORT){s.state=0;this.ota()}break;
+   case OP.BEGIN:s.total=b[1]|(b[2]<<8)|(b[3]<<16)|(b[4]<<24);s.total>>>=0;s.recv=0;s.state=2;this.ota();break;
+  }};
+DemoT.prototype.data=async function(b){var s=this.st;if(s.state!==2)return;await sleep(2);var prev=s.recv;s.recv=Math.min(s.total,s.recv+b.length);
+  if(s.recv===s.total){s.state=3;this.ota();var me=this;setTimeout(function(){s.state=4;me.ota();setTimeout(function(){me.disconnect()},1500)},700)}
+  else if(Math.floor(s.recv/4096)>Math.floor(prev/4096))this.ota()};
+
+// ---------- protocol ----------
+function onStat(u){
+  if(!u.length)return;
+  if(u[0]===1&&u.length>5){
+    var parts=new TextDecoder().decode(u.slice(5)).split('\0');
+    S.info={theme:u[2],style:u[3],flags:u[4],ver:parts[0],profile:parts[1],text:parts[2]||''};
+    if(!S.textTouched)S.text=S.info.text;
+  }else if(u[0]===0x10&&u.length>=11){
+    S.ota={state:u[1],err:u[2],recv:(u[3]|(u[4]<<8)|(u[5]<<16)|(u[6]<<24))>>>0,total:(u[7]|(u[8]<<8)|(u[9]<<16)|(u[10]<<24))>>>0};
+    if(S.otaWait){var w=S.otaWait;S.otaWait=null;w()}
+    paintOta();
+  }else if(u[0]===0x30&&u.length>=3){
+    var f=S.acks[u[1]];if(f){delete S.acks[u[1]];f(u[2])}
+  }
+  if(u[0]===1)render();
+}
+function sendAck(bytes){return new Promise(function(res,rej){
+  var op=bytes[0],to=setTimeout(function(){delete S.acks[op];rej(new Error('Intet svar fra boardet'))},4000);
+  S.acks[op]=function(r){clearTimeout(to);r===0?res():rej(new Error('Boardet afviste kommandoen'))};
+  S.t.ctrl(bytes).catch(function(e){clearTimeout(to);delete S.acks[op];rej(e)});
+})}
+function waitOta(ms){return new Promise(function(res){var to=setTimeout(function(){S.otaWait=null;res()},ms);S.otaWait=function(){clearTimeout(to);res()}})}
+
+async function connect(demo){
+  S.msg='';
+  try{
+    S.demo=!!demo;S.t=demo?new DemoT():new BleT();
+    S.t.onStat=onStat;
+    S.t.onClose=function(){S.conn=false;S.info=null;S.busy=false;if(S.ota.state===4)S.msg='Opdatering færdig – boardet genstarter.';render()};
+    await S.t.connect();
+    S.conn=true;render();
+    await S.t.ctrl([OP.INFO]);
+  }catch(e){S.conn=false;S.msg=(e&&e.message)||String(e);render()}
+}
+function disconnect(){if(S.t)S.t.disconnect()}
+
+async function act(fn){
+  if(!S.conn){S.msg='Forbind først.';render();return}
+  try{await fn();S.msg=''}catch(e){S.msg=(e&&e.message)||String(e)}
+  render();
+}
+function setTheme(i){return act(async function(){await sendAck([OP.THEME,i]);await S.t.ctrl([OP.INFO])})}
+function setStyle(i){return act(async function(){await sendAck([OP.STYLE,i]);await S.t.ctrl([OP.INFO])})}
+function sendText(){return act(async function(){var u=Array.from(new TextEncoder().encode(S.text.replace(/[^\x20-\x7E]/g,'').slice(0,15)));await sendAck([OP.TEXT].concat(u));S.textTouched=false;await S.t.ctrl([OP.INFO])})}
+function preview(){return act(function(){return sendAck([OP.PREVIEW])})}
+function music(k){return act(function(){return sendAck([OP.MUSIC,k])})}
+function sendImage(){return act(async function(){
+  if(!S.img)throw new Error('Vælg et billede først.');
+  S.busy=true;render();
+  await sendAck([OP.IMG_BEGIN]);
+  for(var off=0;off<1024;off+=128)await sendAck([OP.IMG_CHUNK,off&255,off>>8].concat(Array.from(S.img.slice(off,off+128))));
+  await sendAck([OP.IMG_END]);
+  await sendAck([OP.STYLE,2]);
+  S.busy=false;await S.t.ctrl([OP.INFO]);
+})}
+
+// ---------- firmware update ----------
+function checkFile(u8,name){
+  if(!/\.bin$/i.test(name))return 'Filen skal være en .bin';
+  if(u8.length<MINAPP||u8.length>MAXAPP)return 'Størrelsen skal være mellem 64 KB og '+(MAXAPP/1024)+' KB (er '+Math.round(u8.length/1024)+' KB)';
+  if(u8[0]!==0xE9||u8[12]!==0||u8[13]!==0)return 'Det ligner ikke en ESP32-app (.bin). Brug NOVA_RIDE_<profil>.bin – ikke .factory.bin';
+  return '';
+}
+async function pickFile(f){
+  S.file=null;S.fileInfo=null;S.msg='';
+  if(!f){render();return}
+  var u8=new Uint8Array(await f.arrayBuffer());
+  var bad=checkFile(u8,f.name);
+  S.fileInfo={name:f.name,size:u8.length,crc:crc32(u8),bad:bad};
+  S.file=bad?null:u8;
+  render();
+}
+async function startUpdate(){
+  if(!S.file||!S.conn)return;
+  S.busy=true;S.msg='';S.ota={state:0,err:0,recv:0,total:S.file.length};S.t0=Date.now();render();
+  try{
+    await S.t.ctrl([OP.BEGIN].concat(le32(S.file.length),le32(S.fileInfo.crc)));
+    await waitOta(5000);
+    if(S.ota.state!==2)throw new Error(ERR[S.ota.err]||'Boardet startede ikke opdateringen');
+    var CH=160,sent=0,u=S.file;
+    while(sent<u.length){
+      if(S.ota.state===5)throw new Error(ERR[S.ota.err]||'Fejl på boardet');
+      if(sent-S.ota.recv>=6144){await waitOta(3000);if(sent-S.ota.recv>=6144&&S.ota.state===2){await sleep(50);continue}}
+      var end=Math.min(u.length,sent+CH);
+      await S.t.data(u.slice(sent,end));
+      sent=end;
+    }
+    var t0=Date.now();
+    while(S.ota.state!==4&&S.ota.state!==5&&Date.now()-t0<20000)await waitOta(1000);
+    if(S.ota.state===5)throw new Error(ERR[S.ota.err]||'Fejl på boardet');
+    S.msg='Opdatering sendt. Boardet genstarter nu.';
+  }catch(e){
+    S.msg=(e&&e.message)||String(e);
+    try{if(S.conn)await S.t.ctrl([OP.ABORT])}catch(x){}
+  }
+  S.busy=false;render();
+}
+function paintOta(){
+  var b=$('#obar'),t=$('#otxt');if(!b)return;
+  var o=S.ota,pct=o.total?Math.floor(o.recv*100/o.total):0;
+  b.style.width=pct+'%';
+  var el=(Date.now()-(S.t0||Date.now()))/1000,sp=el>0?o.recv/el/1024:0;
+  var names=['Klar','Klar','Sender…','Kontrollerer…','Færdig – genstarter','Fejl'];
+  t.textContent=names[o.state]+'  '+pct+'%  ('+Math.round(o.recv/1024)+' / '+Math.round(o.total/1024)+' KB'+(sp>0?', '+sp.toFixed(1)+' KB/s':'')+')';
+}
+
+// ---------- images ----------
+async function loadImage(f){
+  if(!f)return;S.imgName=f.name;S.imgFile=f;await rebuildImg();render();
+}
+async function rebuildImg(){
+  if(!S.imgFile)return;
+  var bmp=await createImageBitmap(S.imgFile),c=document.createElement('canvas');c.width=128;c.height=64;
+  var g=c.getContext('2d');g.fillStyle='#000';g.fillRect(0,0,128,64);
+  var sc=Math.min(128/bmp.width,64/bmp.height),w=bmp.width*sc,h=bmp.height*sc;g.drawImage(bmp,(128-w)/2,(64-h)/2,w,h);
+  var d=g.getImageData(0,0,128,64).data,bits=new Uint8Array(1024);
+  for(var y=0;y<64;y++)for(var x=0;x<128;x++){var i=(y*128+x)*4,lum=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2],on=lum>S.thr;if(S.inv)on=!on;if(on){var b=y*128+x;bits[b>>3]|=0x80>>(b&7)}}
+  S.img=bits;paintImg();
+}
+function paintImg(){
+  var cv=$('#imgprev');if(!cv||!S.img)return;var g=cv.getContext('2d'),th=THEMES[S.info?S.info.theme:0];
+  g.fillStyle='#000';g.fillRect(0,0,128,64);g.fillStyle=th.neon;
+  for(var y=0;y<64;y++)for(var x=0;x<128;x++){var b=y*128+x;if(S.img[b>>3]&(0x80>>(b&7)))g.fillRect(x,y,1,1)}
+}
+
+// ---------- drawing helpers ----------
+function miniDash(t){
+  return '<svg viewBox="0 0 160 100"><rect width="160" height="100" fill="'+t.bg+'"/>'+
+  '<circle cx="48" cy="52" r="34" fill="none" stroke="'+t.panel+'" stroke-width="9"/>'+
+  '<circle cx="48" cy="52" r="34" fill="none" stroke="'+t.neon+'" stroke-width="9" stroke-dasharray="120 214" transform="rotate(135 48 52)"/>'+
+  '<text x="48" y="60" text-anchor="middle" font-size="26" font-weight="700" fill="'+t.text+'" font-family="monospace">23</text>'+
+  '<text x="110" y="30" font-size="18" font-weight="700" fill="'+t.text+'" font-family="monospace">340</text>'+
+  '<rect x="92" y="38" width="56" height="5" rx="2" fill="'+t.panel+'"/><rect x="92" y="38" width="30" height="5" rx="2" fill="'+t.neon+'"/>'+
+  '<rect x="92" y="58" width="56" height="5" rx="2" fill="'+t.panel+'"/><rect x="92" y="58" width="38" height="5" rx="2" fill="'+t.ok+'"/>'+
+  '<rect x="8" y="86" width="30" height="9" rx="3" fill="'+t.panel+'"/><rect x="42" y="86" width="30" height="9" rx="3" fill="'+t.panel+'" stroke="'+t.ok+'"/>'+
+  '<rect x="76" y="86" width="30" height="9" rx="3" fill="'+t.panel+'"/><rect x="110" y="86" width="30" height="9" rx="3" fill="'+t.panel+'"/></svg>';
+}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function kv(a,b){return '<div class="kv"><span>'+a+'</span><span>'+b+'</span></div>'}
+function chip(t,ok){return '<span class="chip'+(ok?' ok':'')+'">'+t+'</span>'}
+function curTheme(){return THEMES[S.info?S.info.theme:0]}
+
+// ---------- views ----------
+var TABS=[['device','🛴','Enhed'],['update','⬆️','Opdater'],['themes','🎨','Temaer'],['boot','✨','Boot'],['music','🎵','Musik']];
+function render(){
+  var pill=$('#pill');pill.textContent=S.conn?(S.demo?'Demo':'Forbundet'):'Ikke forbundet';pill.className=S.conn?'on':'';
+  $('#tabs').innerHTML=TABS.map(function(t){return '<button data-t="'+t[0]+'" class="'+(S.tab===t[0]?'sel':'')+'"><span>'+t[1]+'</span>'+t[2]+'</button>'}).join('');
+  var v=$('#view'),h='';
+  if(S.msg)h+='<div class="card warn">'+esc(S.msg)+'</div>';
+  if(S.tab==='device')h+=vDevice();else if(S.tab==='update')h+=vUpdate();else if(S.tab==='themes')h+=vThemes();else if(S.tab==='boot')h+=vBoot();else h+=vMusic();
+  v.innerHTML=h;wire();
+  if(S.tab==='update')paintOta();if(S.tab==='boot')paintImg();
+}
+function vDevice(){
+  var i=S.info,th=curTheme(),h='<div class="card"><div class="hero">'+
+  '<svg width="92" height="92" viewBox="0 0 92 92"><circle cx="46" cy="46" r="36" fill="none" stroke="var(--card2)" stroke-width="10"/><circle cx="46" cy="46" r="36" fill="none" stroke="var(--acc)" stroke-width="10" stroke-dasharray="130 226" transform="rotate(135 46 46)"/><text x="46" y="53" text-anchor="middle" font-size="20" font-weight="800" fill="var(--fg)">N</text></svg>'+
+  '<div><h2>NOVA RIDE OS</h2><p>'+(S.conn&&i?'Firmware '+esc(i.ver):'CYD-dashboard til dit løbehjul')+'</p></div></div>';
+  if(S.conn&&i){var f=i.flags;h+='<div class="chips">'+chip('Telefon '+(f&4?'forbundet':'ikke forbundet'),f&4)+chip('Løbehjul '+(f&8?'forbundet':'ikke forbundet'),f&8)+chip('Opdateringsvindue '+(f&1?'åbent':'lukket'),f&1)+'</div>'}
+  h+='</div>';
+  if(S.conn){
+    h+='<div class="card"><h3>Enhed</h3>'+(i?kv('Firmware',esc(i.ver))+kv('Profil',esc(i.profile))+kv('Tema',THEMES[i.theme]?THEMES[i.theme].n:'?')+kv('Bootskærm',STYLES[i.style]||'?')+kv('Tekst',esc(i.text||'–')):'<p>Henter oplysninger…</p>')+'</div>'+
+    '<button class="btn sec" data-a="disc">Afbryd</button>';
+  }else{
+    h+='<div class="card"><h2>Forbind</h2><p>Sæt <b>PHONE ON</b> i boardets Settings, og vælg derefter <b>NOVA RIDE</b>. Første gang beder iPhonen om at parre.</p>'+
+    (navigator.bluetooth?'':'<p class="warn">Denne browser har ikke Web Bluetooth. På iPhone: åbn siden i appen <b>Bluefy</b>. På Android/Windows: brug Chrome eller Edge.</p>')+
+    '<button class="btn" data-a="conn"'+(navigator.bluetooth?'':' disabled')+'>Find NOVA RIDE</button><button class="btn sec" data-a="demo">Prøv demo uden board</button></div>';
+  }
+  return h;
+}
+function vUpdate(){
+  var fi=S.fileInfo,h='<div class="card"><h2>Opdater firmware</h2>'+
+  '<div class="step"><em>1</em><div>På boardet: <b>Settings → UPDATE</b>, og hold knappen nede, så <b>WINDOW OPEN</b> vises (2 minutter).</div></div>'+
+  '<div class="step"><em>2</em><div>Vælg din egen fil <b>NOVA_RIDE_&lt;profil&gt;.bin</b> (fra GitHub Actions, ikke <i>.factory.bin</i>).</div></div>'+
+  '<div class="step"><em>3</em><div>Tryk <b>Start opdatering</b>. Lad telefonen ligge tæt på, og stå stille med hjulet.</div></div></div>'+
+  '<div class="card"><input type="file" id="bin" accept=".bin,application/octet-stream" style="width:100%">';
+  if(fi)h+=kv('Fil',esc(fi.name))+kv('Størrelse',Math.round(fi.size/1024)+' KB')+kv('CRC-32',hex(fi.crc))+(fi.bad?'<p style="color:var(--bad)">'+esc(fi.bad)+'</p>':'<p style="color:var(--ok)">Filen ser ud som en gyldig ESP32-app.</p>');
+  h+='<div class="bar"><i id="obar"></i></div><div class="small" id="otxt">Klar</div>'+
+  '<button class="btn" data-a="go"'+((S.file&&S.conn&&!S.busy)?'':' disabled')+'>Start opdatering</button></div>'+
+  '<p class="small">Boardet kontrollerer filens størrelse, ESP32-header og CRC, og opdateringen kræver, at du selv har åbnet vinduet på boardet. Der er ingen signatur: installér kun filer, du selv har bygget. Går noget galt, kan du altid flashe igen med USB.</p>';
+  return h;
+}
+function vThemes(){
+  var cur=S.info?S.info.theme:-1;
+  return '<div class="card"><h2>Temaer</h2><p>Vælg farverne. Det gælder hele skærmen med det samme.</p><div class="grid">'+
+  THEMES.map(function(t,i){return '<div class="tcard'+(i===cur?' sel':'')+'" data-th="'+i+'">'+miniDash(t)+t.n+'</div>'}).join('')+'</div></div>';
+}
+function vBoot(){
+  var st=S.info?S.info.style:-1,th=curTheme();
+  var h='<div class="card"><h2>Bootskærm</h2><p>Vælg stil. Boardet viser den med det samme.</p><div class="seg">'+
+  STYLES.map(function(n,i){return '<button data-st="'+i+'" class="'+(i===st?'sel':'')+'">'+n+'</button>'}).join('')+'</div></div>'+
+  '<div class="card"><h3>Tekst (maks 15 tegn)</h3><input type="text" id="btext" maxlength="15" value="'+esc(S.text)+'" placeholder="Dit navn"><button class="btn sec" data-a="text">Send tekst</button></div>'+
+  '<div class="card"><h3>Billede (128 × 64, sort/hvid)</h3><input type="file" id="img" accept="image/*" style="width:100%">'+
+  '<canvas id="imgprev" width="128" height="64" style="margin-top:10px"></canvas>'+
+  '<p>Lysstyrke-grænse: <span id="thrv">'+S.thr+'</span></p><input type="range" id="thr" min="20" max="235" value="'+S.thr+'">'+
+  '<label class="small"><input type="checkbox" id="inv"'+(S.inv?' checked':'')+'> Byt lyst/mørkt</label>'+
+  '<button class="btn" data-a="img"'+((S.img&&S.conn&&!S.busy)?'':' disabled')+'>'+(S.busy?'Sender…':'Send billede til boardet')+'</button></div>'+
+  '<button class="btn sec" data-a="prev">Vis bootskærm på boardet</button>';
+  return h;
+}
+function vMusic(){
+  return '<div class="card"><h2>Musik</h2><p>Knapperne sender medietaster via boardet til din iPhone, så de styrer den app, der spiller. Boardet skal være parret som Bluetooth-enhed (PHONE ON). Titel og kunstner er ikke med endnu.</p>'+
+  '<div class="play"><button data-m="0">⏮</button><button class="big" data-m="1">⏯</button><button data-m="2">⏭</button></div></div>';
+}
+function wire(){
+  var v=$('#view');
+  [].forEach.call(document.querySelectorAll('[data-a]'),function(b){b.onclick=function(){
+    var a=b.dataset.a;
+    if(a==='conn')connect(false);else if(a==='demo')connect(true);else if(a==='disc')disconnect();
+    else if(a==='go')startUpdate();else if(a==='text')sendText();else if(a==='img')sendImage();else if(a==='prev')preview();
+  }});
+  [].forEach.call(document.querySelectorAll('[data-th]'),function(b){b.onclick=function(){setTheme(+b.dataset.th)}});
+  [].forEach.call(document.querySelectorAll('[data-st]'),function(b){b.onclick=function(){setStyle(+b.dataset.st)}});
+  [].forEach.call(document.querySelectorAll('[data-m]'),function(b){b.onclick=function(){music(+b.dataset.m)}});
+  var bin=$('#bin');if(bin)bin.onchange=function(){pickFile(bin.files[0])};
+  var img=$('#img');if(img)img.onchange=function(){loadImage(img.files[0])};
+  var thr=$('#thr');if(thr)thr.oninput=function(){S.thr=+thr.value;$('#thrv').textContent=S.thr;rebuildImg()};
+  var inv=$('#inv');if(inv)inv.onchange=function(){S.inv=inv.checked;rebuildImg()};
+  var bt=$('#btext');if(bt)bt.oninput=function(){S.text=bt.value;S.textTouched=true};
+  [].forEach.call(document.querySelectorAll('#tabs button'),function(b){b.onclick=function(){S.tab=b.dataset.t;render()}});
+}
+render();
+})();
+</script>
+</body>
+</html>
